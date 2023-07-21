@@ -1,0 +1,190 @@
+---
+title: "Data Analysis Project - Proposal"
+author: 
+  - Hitesh Yadav (hitesh2) 
+  - Byunggeun Park (bpark14)
+  - Avinika Pandugayala (avinika2)
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document: 
+    theme: lumen
+    toc: yes
+    toc_float:
+      collapsed: false
+    highlight: tango
+    code_folding: hide
+    toc_collapsed: false
+  pdf_document: default
+urlcolor: cyan
+bibliography: citation.bib
+---
+
+***
+
+## Introduction
+
+### Overview
+
+The housing market in today's day and age is influenced by a variety of factors like location, size of the house, amenities, school district and above all the economic conditions. THe project is to predict the price of a house based on some of these factors. We aim to create a model using techniques in R and create a predictive model that can be used to estimate the price.
+
+The data we are going to use is obtained from Kaggle and can be found at the link [here](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data) [@house-prices-advanced-regression-techniques]. We are not considering the economic conditions in this project as one of the factors for the price of the house and keeping it as out of scope for this analysis project.
+
+### Tentative Title
+
+As we plan to explore the data and build a predictive model for the pricing of the house we may have different predictor variables that can influence the path we take for the project. Below are some of the titles that the project can have based on our model we create:
+
+- **Modeling the Dynamics of House Prices**
+- **Understanding the Factors That Drive House Prices**
+
+## Dataset
+
+The data set we are using is sourced from a Kaggle competition in the link [here](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data) [@house-prices-advanced-regression-techniques].
+
+From the competition Acknowledgements
+
+*The Ames Housing dataset was compiled by Dean De Cock for use in data science education. It's an incredible alternative for data scientists looking for a modernized and expanded version of the often cited Boston Housing dataset.*
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+library(readr)
+require(plyr)
+require(stringr)
+housing_train = read.csv("data/train.csv")
+housing_test = read.csv("data/test.csv")
+data_desc = read.csv("data/field_descriptions.csv")
+```
+
+The dataset is divided into 2 files that include training and test data. The dataset also includes a file that has description of the fields of the dataset.
+
+### Data files
+
+- `train.csv` - Training dataset that contains ``r nrow(housing_train)`` observations and ``r ncol(housing_train)`` variables.
+- `test.csv` - Test dataset that contains ``r nrow(housing_test)`` observations and ``r ncol(housing_test)`` variables.
+- `data_description.csv` - Metadata for variables in the file. Originally prepared by Dean De Cock. [@house-prices-advanced-regression-techniques]
+
+### Variables/Data fields
+
+```{r, echo = FALSE}
+library(knitr)
+library(kableExtra)
+library(DT)
+
+variables = data.frame(
+  Variable = names(housing_train),
+  Type = sapply(housing_train, typeof),
+  row.names = NULL
+)
+
+df = merge(x = variables, y = data_desc, by = "Variable")
+
+df %>%
+  kable(booktabs = T, longtable = TRUE, linesep = "") %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T) %>%
+  column_spec(1, bold = T) %>%
+  column_spec(3, width = "30em") %>%
+  scroll_box(height = "400px")
+```
+
+### Data Exploration
+
+For any data analysis project its good to know the the underlying data and the values. Specially what are types of the data and fields we can use to do the prediction.
+
+We will use `SalePrice` as our response for the model and any or all fields in the dataset that we see fit for the model building.
+
+### Sample Data
+Exploring the data we can look at some of the columns and values in the dataset.
+
+```{r, message = FALSE, warning = FALSE}
+dplyr::sample_n(housing_train, 10) %>%
+  dplyr::select(SalePrice
+                , YearBuilt
+                , LotArea
+                , Neighborhood
+                , Utilities
+                , BldgType
+                , Fireplaces
+                , GarageType) %>%
+  kable(booktabs = T, linesep = "") %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T)
+```
+
+### Missing Values
+We will use DataExplorere package to look into the data and intial profiling of the data. The idea is to understand the data better and make sure that we have detailed column analysis before we start building the model.
+
+```{r, message = FALSE, warning = FALSE, fig.align='center'}
+library(ggplot2)
+
+gtheme = theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), text = element_text(size=8))
+
+library(DataExplorer)
+t(introduce(housing_train)) %>%
+  kable(booktabs = T, linesep = "") %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T)
+```
+
+Looking at the initial table above we can see that there are substantial missing values in the observations specially there are `0` complete rows that means we cannot just remove the missing value lines, doing so will have 0 observations for training. We will circle back on fixing the missing values in some time.
+
+\newpage
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
+plot_intro(housing_train, ggtheme = gtheme)
+```
+
+The intro plot also provides similar insights that we have`0%` complete and `5.9%` of the observations have missing values. We can further check the features that have missing values.
+
+```{r, message=FALSE, warning=FALSE, fig.align='center'}
+plot_missing(housing_train, missing_only = TRUE, ggtheme = gtheme)
+```
+
+Above plot provides details on the columns have missing values. We can further dive into the missing values variables by creating a bar plot and checking if the missing values need to be updated.
+
+```{r, message = FALSE, warning = FALSE, fig.align='center'}
+missing_profile = profile_missing(housing_train)
+missing_only = missing_profile[missing_profile$num_missing > 0,]
+housing_missing_cols = housing_train[, names(housing_train) %in% missing_only$feature]
+
+plot_bar(housing_missing_cols
+         , ggtheme = gtheme)
+
+select_na_recs = rbind(dplyr::sample_n(housing_missing_cols[is.na(housing_missing_cols$LotFrontage),], 5)
+                       , dplyr::sample_n(housing_missing_cols[is.na(housing_missing_cols$MasVnrArea),], 5)
+                       , dplyr::sample_n(housing_missing_cols[is.na(housing_missing_cols$GarageYrBlt),], 5))
+
+select_na_recs %>%
+  dplyr::select(LotFrontage
+                , GarageYrBlt
+                , MasVnrArea) %>%
+  mutate(LotFrontage = cell_spec(LotFrontage
+                                 , color = "white"
+                                 , background = ifelse(is.na(LotFrontage), "red", "green"))) %>%
+  mutate(GarageYrBlt = cell_spec(GarageYrBlt
+                                 , color = "white"
+                                 , background = ifelse(is.na(GarageYrBlt), "red", "green"))) %>%
+  mutate(MasVnrArea = cell_spec(MasVnrArea
+                                , color = "white"
+                                , background = ifelse(is.na(MasVnrArea), "red", "green"))) %>%
+  kable(booktabs = T, linesep = "", escape=FALSE) %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T)
+```
+
+Looking at the bar plot for the Categorical variables we can see that there are a lot of records with `NA` as value. Even though the data descriptions says that the NA is not applicable this value might not work well with `R`.
+
+Similarly we can see that the numerical fields `LotFrontage`, `GarageYrBlt` and `MasVnrArea` we have `NA` as value. In this case even though `NA` means not applicabel for the data we would need to make sure that we handle these values correctly in programming.
+
+To handle this scemario we will update the values for character variables to `Other` and for numerical variables to `0` so that we can handle them better when building the model.
+
+
+## References
