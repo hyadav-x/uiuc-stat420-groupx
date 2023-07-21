@@ -190,6 +190,8 @@ Looking at the bar plot for the Categorical variables we can see that there are 
 
 Similarly we can see that the numerical fields `LotFrontage`, `GarageYrBlt` and `MasVnrArea` we have `NA` as value. In this case even though `NA` means not applicabel for the data we would need to make sure that we handle these values correctly in programming.
 
+### Data Cleaning
+
 To handle this scemario we will update the values for character variables to `Other` and for numerical variables to `0` so that we can handle them better when building the model.
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
