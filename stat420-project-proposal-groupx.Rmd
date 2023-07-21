@@ -27,7 +27,7 @@ nocite: |
 
 ### Overview
 
-The housing market in today's day and age is influenced by a variety of factors like location, size of the house, amenities, school district and above all the economic conditions. THe project is to predict the price of a house based on some of these factors. We aim to create a model using techniques in R and create a predictive model that can be used to estimate the price.
+The housing market in today's day and age is influenced by a variety of factors like location, size of the house, amenities, school district and above all the economic conditions. The project is to predict the price of a house based on some of these factors. We aim to create a model using techniques in R and create a predictive model that can be used to estimate the price.
 
 The data we are going to use is obtained from Kaggle and can be found at the link [here](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data) [@house-prices-advanced-regression-techniques]. We are not considering the economic conditions in this project as one of the factors for the price of the house and keeping it as out of scope for this analysis project.
 
@@ -49,7 +49,11 @@ From the competition Acknowledgements
 
 *The Ames Housing dataset was compiled by Dean De Cock for use in data science education. It's an incredible alternative for data scientists looking for a modernized and expanded version of the often cited Boston Housing dataset.*
 
-```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+### Data files
+
+The dataset is divided into 2 files that include training and test data. The dataset also includes a file that has description of the fields of the dataset.
+
+```{r, message = FALSE, warning = FALSE}
 library(readr)
 require(plyr)
 require(stringr)
@@ -57,10 +61,6 @@ housing_train = read.csv("data/train.csv")
 housing_test = read.csv("data/test.csv")
 data_desc = read.csv("data/field_descriptions.csv")
 ```
-
-The dataset is divided into 2 files that include training and test data. The dataset also includes a file that has description of the fields of the dataset.
-
-### Data files
 
 - `train.csv` - Training dataset that contains ``r nrow(housing_train)`` observations and ``r ncol(housing_train)`` variables.
 - `test.csv` - Test dataset that contains ``r nrow(housing_test)`` observations and ``r ncol(housing_test)`` variables.
@@ -122,7 +122,7 @@ dplyr::sample_n(housing_train, 10) %>%
 ```
 
 ### Missing Values
-We will use DataExplorere package to look into the data and intial profiling of the data. The idea is to understand the data better and make sure that we have detailed column analysis before we start building the model.
+We will use `DataExplorer` package to look into the data and initial profiling of the data. The idea is to understand the data better and make sure that we have detailed column analysis before we start building the model.
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center'}
 library(ggplot2)
@@ -190,11 +190,11 @@ select_na_recs %>%
 
 Looking at the bar plot for the Categorical variables we can see that there are a lot of records with `NA` as value. Even though the data descriptions says that the NA is not applicable this value might not work well with `R`.
 
-Similarly we can see that the numerical fields `LotFrontage`, `GarageYrBlt` and `MasVnrArea` we have `NA` as value. In this case even though `NA` means not applicabel for the data we would need to make sure that we handle these values correctly in programming.
+Similarly we can see that the numerical fields `LotFrontage`, `GarageYrBlt` and `MasVnrArea` we have `NA` as value. In this case even though `NA` means not applicable for the data we would need to make sure that we handle these values correctly in programming.
 
 ### Data Cleaning
 
-To handle this scemario we will update the values for character variables to `Other` and for numerical variables to `0` so that we can handle them better when building the model.
+To handle this scenario we will update the values for character variables to `Other` and for numerical variables to `0` so that we can handle them better when building the model.
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
 # Fix the missing values
