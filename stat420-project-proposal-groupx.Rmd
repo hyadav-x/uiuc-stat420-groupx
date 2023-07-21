@@ -130,7 +130,7 @@ library(ggplot2)
 gtheme = theme(plot.title = element_text(hjust = 0.5),
         axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.border = element_blank(),
-        panel.background = element_blank(), text = element_text(size=8))
+        panel.background = element_blank(), text = element_text(size=10))
 
 library(DataExplorer)
 t(introduce(housing_train)) %>%
