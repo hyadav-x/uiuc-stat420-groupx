@@ -17,6 +17,8 @@ output:
   pdf_document: default
 urlcolor: cyan
 bibliography: citation.bib
+nocite: |
+  @david
 ---
 
 ***
@@ -35,6 +37,7 @@ As we plan to explore the data and build a predictive model for the pricing of t
 
 - **Modeling the Dynamics of House Prices**
 - **Understanding the Factors That Drive House Prices**
+- **Housing Market Analytics: Predicting Property Sale Prices**
 
 ## Dataset
 
@@ -60,6 +63,9 @@ The dataset is divided into 2 files that include training and test data. The dat
 - `train.csv` - Training dataset that contains ``r nrow(housing_train)`` observations and ``r ncol(housing_train)`` variables.
 - `test.csv` - Test dataset that contains ``r nrow(housing_test)`` observations and ``r ncol(housing_test)`` variables.
 - `data_description.csv` - Metadata for variables in the file. Originally prepared by Dean De Cock. [@house-prices-advanced-regression-techniques]
+- `sample_submission.csv` - The file contains the sale price for the test data.
+
+For our final project we will combine the training and test data to do a 80-20 split. We will use the sale price values from `sample_submission.csv` to add the missing `SalePrice` variable in the test data. 
 
 ### Variables/Data fields
 
@@ -186,5 +192,34 @@ Similarly we can see that the numerical fields `LotFrontage`, `GarageYrBlt` and 
 
 To handle this scemario we will update the values for character variables to `Other` and for numerical variables to `0` so that we can handle them better when building the model.
 
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
+# Fix the missing values
+housing_train[c("LotFrontage"
+                , "GarageYrBlt"
+                , "MasVnrArea")][is.na(housing_train[c("LotFrontage"
+                                                       , "GarageYrBlt"
+                                                       , "MasVnrArea")])] = 0
+
+housing_train[names(housing_missing_cols)][is.na(housing_train[names(housing_missing_cols)])] = "Other"
+
+plot_intro(housing_train)
+
+dplyr::sample_n(housing_train, 10) %>%
+  dplyr::select(LotFrontage
+                , GarageYrBlt
+                , MasVnrArea) %>%
+  kable(booktabs = T, linesep = "") %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T)
+```
+With the initial data cleaning done we can see from above plot that the data seems to be clean and usable now as we have removed all the `NA` and all rows are complete with values that we can use in `R` for modeling.
+
+## Statement of Research and Intereset
+
+- We as a team want to implement the techniques of statistical analysis we learnt in this course and implement to the housing data. With current house prices being all time high it would be nice if we can build something that helps analyze current market trend and help predict the value if houses that are in the market.
+
+- The project will also help us explore some coding techniques and packagers that are available for processes like data exploration, profiling and manipulation in `R`. We would like to understand the different tools and techniques we can use in `R` for model building.
 
 ## References
