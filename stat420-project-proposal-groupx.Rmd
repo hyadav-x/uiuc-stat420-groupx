@@ -95,7 +95,7 @@ df %>%
   scroll_box(height = "400px")
 ```
 
-### Data Exploration
+## Data Exploration
 
 For any data analysis project its good to know the the underlying data and the values. Specially what are types of the data and fields we can use to do the prediction.
 
