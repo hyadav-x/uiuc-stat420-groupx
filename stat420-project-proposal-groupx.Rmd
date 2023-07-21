@@ -38,6 +38,8 @@ As we plan to explore the data and build a predictive model for the pricing of t
 - **Modeling the Dynamics of House Prices**
 - **Understanding the Factors That Drive House Prices**
 - **Housing Market Analytics: Predicting Property Sale Prices**
+- **Predicting House Prices: A Regression Analysis**
+- **Predicting Real Estate Prices: A Comprehensive Regression Study**
 
 ## Dataset
 
@@ -218,10 +220,18 @@ dplyr::sample_n(housing_train, 10) %>%
 ```
 With the initial data cleaning done we can see from above plot that the data seems to be clean and usable now as we have removed all the `NA` and all rows are complete with values that we can use in `R` for modeling.
 
-## Statement of Research and Intereset
+## Statement of Research and Interest
 
-- We as a team want to implement the techniques of statistical analysis we learnt in this course and implement to the housing data. With current house prices being all time high it would be nice if we can build something that helps analyze current market trend and help predict the value if houses that are in the market.
+We as a team want to implement the techniques of statistical analysis we learned in this course and implement them in the housing data. With current house prices being all-time high it would be nice if we can build something that helps analyze the current market trend and help predict the value of houses that are in the market.
 
-- The project will also help us explore some coding techniques and packagers that are available for processes like data exploration, profiling and manipulation in `R`. We would like to understand the different tools and techniques we can use in `R` for model building.
+The project will also help us explore some coding techniques and packages that are available for processes like data exploration, profiling, and manipulation in `R`. We would like to understand the different tools and techniques we can use in `R` for model building.
+
+The main objective of this project is to develop a regression model that accurately predicts property sale prices using the "House Prices - Advanced Regression Technique" dataset from Kaggle. The model will take into account various property characteristics, locations, building quality, and amenities to make precise predictions.
+
+The project holds significant business and research interest as it aims to provide valuable assistance to real estate agencies, homeowners, and property investors in making well-informed decisions. By accurately predicting property prices, stakeholders can set competitive listing prices, understand market value, and identify profitable investment opportunities. Additionally, exploring the relationships between sale prices and property features can offer valuable insights into market trends, guiding strategic planning and risk management.
+
+From a scientific perspective, analyzing the dataset will reveal patterns and correlations that contribute to property price fluctuations over time. This exploration will lead to a better understanding of the factors driving property prices, providing insights into property valuation and market dynamics.
+
+Overall, the project's goal is to leverage statistical techniques to build a robust predictive model, gain deep insights into the housing market, and deliver essential information to various stakeholders within the real estate industry.
 
 ## References
