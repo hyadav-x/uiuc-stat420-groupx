@@ -206,7 +206,7 @@ housing_train[c("LotFrontage"
 
 housing_train[names(housing_missing_cols)][is.na(housing_train[names(housing_missing_cols)])] = "Other"
 
-plot_intro(housing_train)
+plot_intro(housing_train, ggtheme = gtheme)
 
 dplyr::sample_n(housing_train, 10) %>%
   dplyr::select(LotFrontage
