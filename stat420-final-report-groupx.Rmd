@@ -224,6 +224,33 @@ dplyr::sample_n(housing_data, 10) %>%
 ```
 With the initial data cleaning done we can see from above plot that the data seems to be clean and usable now as we have removed all the `NA` and all rows are complete with values that we can use in `R` for modeling.
 
+### Response for the Model
+
+We are going to use `SalePrice` as response for the model. As this is a continuous variable we would want to investigate the distribution of the price so that we we can use a linear modeling technique to predict the price. A good initial tool is to check the distribution for a continuous variable is to plot a histogram.
+
+```{r, message = FALSE, warning = FALSE, fig.align='center'}
+ggplot(housing_data, aes(x = SalePrice)) +
+  geom_histogram(bins=30) +
+  labs(title = "Sale Price Distribution", 
+       x = "Sale Price", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), text = element_text(size=8))
+```
+Looking at the histogram we can see that the price of the houses is Skewed to the left. A lot of the time doing a log transformation on the response helow with model building. That is we can do a log transform of the `SalePrice` and check if the values follow a normal distribution and hence helping us build a linear model.
+```{r, message = FALSE, warning = FALSE, fig.align='center'}
+ggplot(housing_data, aes(x = SalePrice)) +
+  geom_histogram(bins=30) +
+  labs(title = "Sale Price Distribution", 
+       x = "Sale Price", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), text = element_text(size=8)) +
+  scale_x_continuous(trans = 'log')
+```
+
 ## Statement of Research and Interest
 
 We as a team want to implement the techniques of statistical analysis we learned in this course and implement them in the housing data. With current house prices being all-time high it would be nice if we can build something that helps analyze the current market trend and help predict the value of houses that are in the market.
