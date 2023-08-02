@@ -230,7 +230,7 @@ We are going to use `SalePrice` as response for the model. As this is a continuo
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center'}
 ggplot(housing_data, aes(x = SalePrice)) +
-  geom_histogram(bins=30) +
+  geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
        x = "Sale Price", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
@@ -238,18 +238,45 @@ ggplot(housing_data, aes(x = SalePrice)) +
         panel.grid.minor = element_blank(), panel.border = element_blank(),
         panel.background = element_blank(), text = element_text(size=8))
 ```
-Looking at the histogram we can see that the price of the houses is Skewed to the left. A lot of the time doing a log transformation on the response helow with model building. That is we can do a log transform of the `SalePrice` and check if the values follow a normal distribution and hence helping us build a linear model.
+Looking at the histogram we can see that the price of the houses is Skewed to the left. A lot of the time doing a log transformation on the response helow with model building. That is we can try doing a couple of transformations of the `SalePrice` and check if the values follow a normal distribution and hence helping us build a linear model.
+
 ```{r, message = FALSE, warning = FALSE, fig.align='center'}
-ggplot(housing_data, aes(x = SalePrice)) +
-  geom_histogram(bins=30) +
+library(gridExtra)
+
+test_response_df = data.frame(logPrice = log(housing_data$SalePrice)
+                              , sqrtPrice = sqrt(housing_data$SalePrice)
+                              , cubertPrice = housing_data$SalePrice^(1/3))
+
+plot1 = ggplot(test_response_df, aes(x = logPrice)) +
+  geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
        x = "Sale Price", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.border = element_blank(),
-        panel.background = element_blank(), text = element_text(size=8)) +
-  scale_x_continuous(trans = 'log')
+        panel.background = element_blank(), text = element_text(size=8))
+
+plot2 = ggplot(test_response_df, aes(x = sqrtPrice)) +
+  geom_histogram(bins=30, fill = "coral") +
+  labs(title = "Sale Price Distribution", 
+       x = "Sale Price", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), text = element_text(size=8))
+
+plot3 = ggplot(test_response_df, aes(x = cubertPrice)) +
+  geom_histogram(bins=30, fill = "coral") +
+  labs(title = "Sale Price Distribution", 
+       x = "Sale Price", y = "Frequency") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.border = element_blank(),
+        panel.background = element_blank(), text = element_text(size=8))
+
+grid.arrange(plot1, plot2, plot3, ncol=3)
 ```
+Out of the 3, log, square root and cube root transformations, we can see that log transforming the response variable gives us the best result of normal distribution of the response variable `SalePrice`. We can now confirm that `SalePrice` should be log transformed in the model so that we can normalize the distribution.
 
 ## Statement of Research and Interest
 
