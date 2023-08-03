@@ -322,8 +322,7 @@ diag(cor_matrix) = 0
 
 high_cor_pairs = which(cor_matrix > 0.3 & cor_matrix < 1 , arr.ind = TRUE)
 
-
-selected_variables = c()
+selected_numeric = c()
 for (i in 1:nrow(high_cor_pairs)) {
   row_index = high_cor_pairs[i, 1]
   col_index = high_cor_pairs[i, 2]
@@ -331,21 +330,20 @@ for (i in 1:nrow(high_cor_pairs)) {
   var2 = colnames(cor_matrix)[col_index]
   correlation_value = cor_matrix[row_index, col_index]
   #print(sprintf("Variables: %s and %s Correlation: %.20f", var1, var2, correlation_value))
-  selected_variables = c(selected_variables, var1)
+  selected_numeric = c(selected_numeric, var1)
 }
 ```
-Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_variables)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatter plot.
+Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_numeric)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatter plot.
 
 ```{r}
-plot_data = housing_data[, c("SalePrice", unique(selected_variables))]
-plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme)
+plot_data = housing_data[, c("SalePrice", unique(selected_numeric))]
+plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme, nrow = 3L, ncol = 4L,)
 ```
-
 
 #### Categorical Variables
 For the categorical variables we will check and analyze how many of the variables have better coverage of the data for different levels. Looking at the bar plot for categorical variables in housing data above (section Missing Values) we can see that a lot of categorical variables have issue. That is either most of the data are in the same category or we have a very small sample of the data for a given category.
 
-We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and seelct those which hace a significant impact on the response `SaleProce`.
+We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and select those which have a significant impact on the response `SaleProce` at a significance level of `0.05`.
 
 ```{r}
 categorical_cols = housing_data %>% select_if(is.factor)
