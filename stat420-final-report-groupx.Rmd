@@ -488,7 +488,7 @@ Now that we have the model selected we can use the model to do a prediction and 
 
 ### Diagnostics
 
-```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Numeric variables vs. SalePrice"}
+```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Model Diagnostics."}
 plot_fitted_resid = function(model, pointcol = "coral", linecol = "dodgerblue") {
   plot(fitted(model), resid(model), 
        col = pointcol, pch = 20, cex = 1.5,
