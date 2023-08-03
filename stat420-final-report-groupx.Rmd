@@ -202,15 +202,15 @@ To handle this scenario we will update the values for character variables to `Ot
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
 # Fix the missing values
-housing_train[c("LotFrontage"
+housing_data[c("LotFrontage"
                 , "GarageYrBlt"
-                , "MasVnrArea")][is.na(housing_train[c("LotFrontage"
+                , "MasVnrArea")][is.na(housing_data[c("LotFrontage"
                                                        , "GarageYrBlt"
                                                        , "MasVnrArea")])] = 0
 
-housing_train[names(housing_missing_cols)][is.na(housing_train[names(housing_missing_cols)])] = "Other"
+housing_data[names(housing_missing_cols)][is.na(housing_data[names(housing_missing_cols)])] = "Other"
 
-plot_intro(housing_train, ggtheme = gtheme)
+plot_intro(housing_data, ggtheme = gtheme)
 
 dplyr::sample_n(housing_data, 10) %>%
   dplyr::select(LotFrontage
@@ -228,7 +228,7 @@ With the initial data cleaning done we can see from above plot that the data see
 
 We are going to use `SalePrice` as response for the model. As this is a continuous variable we would want to investigate the distribution of the price so that we we can use a linear modeling technique to predict the price. A good initial tool is to check the distribution for a continuous variable is to plot a histogram.
 
-```{r, message = FALSE, warning = FALSE, fig.align='center'}
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
 ggplot(housing_data, aes(x = SalePrice)) +
   geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
@@ -240,7 +240,7 @@ ggplot(housing_data, aes(x = SalePrice)) +
 ```
 Looking at the histogram we can see that the price of the houses is Skewed to the left. A lot of the time doing a log transformation on the response helow with model building. That is we can try doing a couple of transformations of the `SalePrice` and check if the values follow a normal distribution and hence helping us build a linear model.
 
-```{r, message = FALSE, warning = FALSE, fig.align='center'}
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7, fig.cap="Response transformation comparision."}
 library(gridExtra)
 
 test_response_df = data.frame(logPrice = log(housing_data$SalePrice)
@@ -250,7 +250,7 @@ test_response_df = data.frame(logPrice = log(housing_data$SalePrice)
 plot1 = ggplot(test_response_df, aes(x = logPrice)) +
   geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
-       x = "Sale Price", y = "Frequency") +
+       x = "logSalePrice", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.border = element_blank(),
@@ -259,7 +259,7 @@ plot1 = ggplot(test_response_df, aes(x = logPrice)) +
 plot2 = ggplot(test_response_df, aes(x = sqrtPrice)) +
   geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
-       x = "Sale Price", y = "Frequency") +
+       x = "sqrtSalePrice", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.border = element_blank(),
@@ -268,7 +268,7 @@ plot2 = ggplot(test_response_df, aes(x = sqrtPrice)) +
 plot3 = ggplot(test_response_df, aes(x = cubertPrice)) +
   geom_histogram(bins=30, fill = "coral") +
   labs(title = "Sale Price Distribution", 
-       x = "Sale Price", y = "Frequency") +
+       x = "cubertSalePrice", y = "Frequency") +
   theme(plot.title = element_text(hjust = 0.5),
         axis.line = element_line(colour = "black"), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.border = element_blank(),
@@ -276,7 +276,83 @@ plot3 = ggplot(test_response_df, aes(x = cubertPrice)) +
 
 grid.arrange(plot1, plot2, plot3, ncol=3)
 ```
-Out of the 3, log, square root and cube root transformations, we can see that log transforming the response variable gives us the best result of normal distribution of the response variable `SalePrice`. We can now confirm that `SalePrice` should be log transformed in the model so that we can normalize the distribution.
+Out of the 3, log, square root and cube root transformations, we can see that log transforming the response variable gives us the best result of **normal distribution** of the response variable `SalePrice`. We can now confirm that `SalePrice` should be log transformed in the model so that we can normalize the distribution.
+
+### Training and Test Data
+```{r}
+set.seed(234)
+
+# Coerce string variables as factor
+housing_data[sapply(housing_data, is.character)] = lapply(housing_data[sapply(housing_data, is.character)], as.factor)
+
+# Split data into training and test datasets
+training_data = housing_data %>% dplyr::sample_frac(0.80)
+test_data = dplyr::anti_join(housing_data, training_data, by = 'Id')
+
+# Drop Id Column from training and test data
+training_data = subset(training_data, select = -c(Id))
+test_data = subset(test_data, select = -c(Id))
+```
+
+
+## Model Building
+Before we can build or model we need to be sure on what features we are going to use. There are 80 variables with mix of continuous and categorical types. Not all variables will be usefull and we can use a process like correlation analysis for numeric variables to drop some of the variables that are highly correlated. We will also look at the categorical variables and drop some variables which do not add value to the model building.
+
+### Feature Selection
+
+#### Numeric variables
+As there are many numeric and categorical variables we can are going to use correlation analysis to select features which are highly correlated to sale price and then compare then to other features which can be dropped.
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=6, fig.width=7, fig.cap="Numeric data correlation with SalePrice"}
+
+# Find Correlation between numeric variables
+plot_correlation(training_data, type = "continuous", ggtheme = gtheme)
+```
+
+Looking at the correlation plot above we can see that there are a number of numeric variables that are highly correlated to the the response `SalePrice`. The variables also so a great correlation between themselves and we can eliminate variables which are highly correlated before building the model.
+
+```{r, message = FALSE, warning = FALSE}
+library(dplyr)
+# Select numerical columns
+numerical_cols = subset(training_data, select = -c(SalePrice)) %>% select_if(is.numeric)
+
+cor_matrix = cor(numerical_cols)
+# Find the pairs of variables with high correlation
+cor_matrix[upper.tri(cor_matrix)] = 0
+diag(cor_matrix) = 0
+
+high_cor_pairs = which(cor_matrix > 0.3 & cor_matrix < 1 , arr.ind = TRUE)
+
+
+selected_variables = c()
+for (i in 1:nrow(high_cor_pairs)) {
+  row_index = high_cor_pairs[i, 1]
+  col_index = high_cor_pairs[i, 2]
+  var1 = colnames(cor_matrix)[row_index]
+  var2 = colnames(cor_matrix)[col_index]
+  correlation_value = cor_matrix[row_index, col_index]
+  #print(sprintf("Variables: %s and %s Correlation: %.20f", var1, var2, correlation_value))
+  selected_variables = c(selected_variables, var1)
+}
+```
+Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_variables)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatterplot.
+```{r}
+plot_data = training_data[, c("SalePrice", unique(selected_variables))]
+plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme)
+```
+
+
+#### Categorical Variables
+For the categorical variables we will check and analyze how many of the variables have better coverage of the data for different levels. Looking at the bar plot for categorical variables in housing data above (section) we can see that a lot of categorical variables have issue as wither most ofthe data are in the same category or there a very small sample of the data for a given category.
+
+```{r}
+categorical_cols = training_data %>% select_if(is.factor)
+all_categories = training_data[, names(categorical_cols)]
+
+prop.table(table(all_categories$RoofMatl))
+
+```
+We should be able to remove the categories that have a very small footprint in the data without any issue as we will get a biased result if we use the value in model building.
+
 
 ## Statement of Research and Interest
 
