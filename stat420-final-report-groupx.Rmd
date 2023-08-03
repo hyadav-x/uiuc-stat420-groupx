@@ -416,14 +416,6 @@ summary(lm_housing_add_select)
 
 Looking at the data and selected variables based on our analysis we think that there should be some good interactions between variables like `HouseStyle`, `LotShape`, `LotConfig`, `BedroomAbvGr`, `TotRmsAbvGrd`, `GrLivArea`, `GarageCars`, `MSZoning`, `X1stFlrSF`, `X2ndFlrSF`, `YearBuilt` and `YearRemodAdd` with certain variables. We will explore these interactions to build the initial interaction model and then reduce the model using backward AIC.
 
-  We will look at some specific interaction to evaluate if they contribute to the model or not. Specifically:
-  - `LotShape` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `GrLivArea`
-  - `GrLivArea` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `GarageCars`
-  - `BedroomAbvGr` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `YearBuilt`, `YearRemodAdd`
-  - `YearBuilt` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `YearRemodAdd`
-
-Interactions:
-
 
 ```{r, message = FALSE, warning = FALSE}
 lm_housing_2_interac = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + YearRemodAdd 
