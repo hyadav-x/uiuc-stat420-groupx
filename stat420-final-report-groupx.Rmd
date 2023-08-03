@@ -10,7 +10,7 @@ output:
     theme: lumen
     toc: yes
     toc_float:
-      collapsed: false
+      collapsed: true
     highlight: tango
     code_folding: hide
     toc_collapsed: false
@@ -459,5 +459,78 @@ lm_housing_quad = lm(log(SalePrice) ~ I(X2ndFlrSF ^ 2) + I(X1stFlrSF ^ 2) + I(Ye
                           + GarageCars, data = training_data)
 lm_housing_quad_select = step(lm_housing_quad, direction = "backward", trace = 0)
 ```
+
+## Model Selection
+We will use adjusted $R^2$ to select the best model out of the ones created above.
+
+```{r, message = FALSE, warning = FALSE}
+adj_r2 = data.frame(
+  "Additive_Model" = c("Adjusted_R2" = summary(lm_housing_add_select)$adj),
+  "AIC_Additive_Final" = c("Adjusted_R2" = summary(lm_housing_add_select)$adj),
+  "Interacton_Model" = c("Adjusted_R2" = summary(lm_housing_2_interac)$adj),
+  "AIC_Interacton_Model_Final" = c("Adjusted_R2" = summary(lm_housing_interac_select)$adj),
+  "Polynomial_Model" = c("Adjusted_R2" = summary(lm_housing_quad)$adj),
+  "AIC_Polynomial_Model_Final" = c("Adjusted_R2" = summary(lm_housing_quad_select)$adj)
+)
+
+knitr::kable(t(adj_r2)) %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T
+                , full_width = F)
+```
+Our best model is reduced two way interaction model which is **`lm_housing_interac_select`** as this has the maximum adj $R^2$ value.
+
+## Results
+
+Now that we have the model selected we can use the model to do a prediction and use diagnostics to validate the assumptions of a linear model.
+
+### Diagnostics
+
+```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Numeric variables vs. SalePrice"}
+plot_fitted_resid = function(model, pointcol = "coral", linecol = "dodgerblue") {
+  plot(fitted(model), resid(model), 
+       col = pointcol, pch = 20, cex = 1.5,
+       xlab = "Fitted", ylab = "Residuals",
+       main = "Residuals vs. Fitted")
+  abline(h = 0, col = linecol, lwd = 2)
+}
+
+plot_qq = function(model, pointcol = "coral", linecol = "dodgerblue") {
+  qqnorm(resid(model), col = pointcol, pch = 20, cex = 1.5)
+  qqline(resid(model), col = linecol, lwd = 2)
+}
+
+par(mfrow=c(1,2))
+
+plot_fitted_resid(lm_housing_interac_select)
+plot_qq(lm_housing_interac_select)
+```
+
+
+```{r, message = FALSE, warning=FALSE}
+# Make predictions using the fitted model and test data
+predicted_values = predict(lm_housing_interac_select, newdata = test_data)
+```
+
+To check the model performance lets do RMSE, a lower RMSE indicates better model performance because it means the model's predictions are closer to the actual values. 
+
+```{r, message = FALSE, warning=FALSE}
+test_data$log_SalePrice = log(test_data$SalePrice)
+rmse = sqrt(mean((test_data$log_SalePrice - predicted_values)^2))
+
+test_data_rmse = data.frame(
+  "Test" = c("RMSE" = rmse)
+)
+
+knitr::kable(t(test_data_rmse)) %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T
+                , full_width = F)
+```
+
 
 ## References
