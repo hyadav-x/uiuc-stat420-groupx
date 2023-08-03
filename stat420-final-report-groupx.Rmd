@@ -333,7 +333,12 @@ Taking a threshold of `0.6` for the highly correlated variables of numeric type 
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Numeric variables vs. SalePrice"}
 plot_data = housing_data[, c("SalePrice", unique(selected_numeric))]
-plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme, nrow = 3L, ncol = 4L,)
+plot_scatterplot(plot_data
+                 , by = "SalePrice"
+                 , ggtheme = gtheme
+                 , geom_point_args = list(colour = "coral")
+                 , nrow = 3L
+                 , ncol = 4L)
 ```
 
 #### Categorical Variables
@@ -410,12 +415,10 @@ We will start with a simple additive model with selected variables and perform a
 ```{r, message = FALSE, warning = FALSE}
 lm_housing_add = lm(log(SalePrice) ~ ., data = training_data)
 lm_housing_add_select = step(lm_housing_add, direction = "backward", trace = 0)
-summary(lm_housing_add_select)
 ```
-### Two-way interactions
+### Two-way interaction model
 
 Looking at the data and selected variables based on our analysis we think that there should be some good interactions between variables like `HouseStyle`, `LotShape`, `LotConfig`, `BedroomAbvGr`, `TotRmsAbvGrd`, `GrLivArea`, `GarageCars`, `MSZoning`, `X1stFlrSF`, `X2ndFlrSF`, `YearBuilt` and `YearRemodAdd` with certain variables. We will explore these interactions to build the initial interaction model and then reduce the model using backward AIC.
-
 
 ```{r, message = FALSE, warning = FALSE}
 lm_housing_2_interac = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + YearRemodAdd 
@@ -442,9 +445,19 @@ lm_housing_2_interac = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + Y
                           + X2ndFlrSF:YearRemodAdd + YearBuilt:YearRemodAdd, 
                           data = training_data)
 lm_housing_interac_select = step(lm_housing_2_interac, direction = "backward", trace = 0)
-
-summary(lm_housing_interac_select)
 ```
 
+### Polynomial model
+
+We can also build a polynomial model and look into how the variables perform. As there are many numeric variables that were selected during variable selection we should be able to try out the polynomial transformation for the variables and see if the model benefits from the transformation. We will only do a quadratic polinomial for the sake of simplicity of the project.
+```{r, message = FALSE, warning = FALSE}
+lm_housing_quad = lm(log(SalePrice) ~ I(X2ndFlrSF ^ 2) + I(X1stFlrSF ^ 2) + I(YearBuilt ^ 2) + I(YearRemodAdd ^ 2) 
+                          + I(MasVnrArea ^ 2) + I(GrLivArea ^ 2) + FullBath + I(TotRmsAbvGrd ^ 2) + Fireplaces 
+                          + HalfBath + BedroomAbvGr + I(OpenPorchSF ^ 2) + MSZoning + LotShape 
+                          + LotConfig + HouseStyle + RoofStyle + MasVnrType + ExterQual 
+                          + BsmtExposure + HeatingQC + BsmtFullBath + KitchenQual + GarageType 
+                          + GarageCars, data = training_data)
+lm_housing_quad_select = step(lm_housing_quad, direction = "backward", trace = 0)
+```
 
 ## References
