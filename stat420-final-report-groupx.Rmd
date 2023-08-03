@@ -23,6 +23,12 @@ nocite: |
 
 ***
 
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+options(scipen = 1, digits = 4, width = 80)
+library(knitr)
+opts_chunk$set(cache = TRUE, autodep = TRUE)
+```
+
 ## Introduction
 
 ### Overview
@@ -325,7 +331,7 @@ for (i in 1:nrow(high_cor_pairs)) {
 ```
 Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_numeric)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatter plot.
 
-```{r}
+```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Numeric variables vs. SalePrice"}
 plot_data = housing_data[, c("SalePrice", unique(selected_numeric))]
 plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme, nrow = 3L, ncol = 4L,)
 ```
@@ -335,7 +341,7 @@ For the categorical variables we will check and analyze how many of the variable
 
 We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and select those which have a significant impact on the response `SaleProce` at a significance level of `0.05`.
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 categorical_cols = housing_data %>% select_if(is.factor)
 categorical_cols_names = names(categorical_cols)
 all_categories = housing_data[, names(categorical_cols)]
@@ -386,7 +392,7 @@ Based on our feature selection we will use below features for the initial model.
 **`r ordered(c(unique(selected_numeric), selected_categories))`**
 
 ### Split Training and Test Data
-```{r}
+```{r, message = FALSE, warning = FALSE}
 set.seed(873465)
 # Split data into training and test datasets
 selected_data = subset(housing_data, select = c("Id", "SalePrice", unique(selected_numeric), selected_categories))
@@ -398,13 +404,55 @@ training_data = subset(training_data, select = -c(Id))
 test_data = subset(test_data, select = -c(Id))
 ```
 
-### Additive Model
-We will start with 
-```{r}
+### Additive model
+We will start with a simple additive model with selected variables and perform a backward AIC to reduce the model and select which of the variables perform well.
+
+```{r, message = FALSE, warning = FALSE}
 lm_housing_add = lm(log(SalePrice) ~ ., data = training_data)
 lm_housing_add_select = step(lm_housing_add, direction = "backward", trace = 0)
-
 summary(lm_housing_add_select)
 ```
+### Two-way interactions
+
+Looking at the data and selected variables based on our analysis we think that there should be some good interactions between variables like `HouseStyle`, `LotShape`, `LotConfig`, `BedroomAbvGr`, `TotRmsAbvGrd`, `GrLivArea`, `GarageCars`, `MSZoning`, `X1stFlrSF`, `X2ndFlrSF`, `YearBuilt` and `YearRemodAdd` with certain variables. We will explore these interactions to build the initial interaction model and then reduce the model using backward AIC.
+
+  We will look at some specific interaction to evaluate if they contribute to the model or not. Specifically:
+  - `LotShape` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `GrLivArea`
+  - `GrLivArea` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `GarageCars`
+  - `BedroomAbvGr` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `YearBuilt`, `YearRemodAdd`
+  - `YearBuilt` interaction with `X1stFlrSF`, `X2ndFlrSF`, `HouseStyle`, `YearRemodAdd`
+
+Interactions:
+
+
+```{r, message = FALSE, warning = FALSE}
+lm_housing_2_interac = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + YearRemodAdd 
+                          + MasVnrArea + GrLivArea + FullBath + TotRmsAbvGrd + Fireplaces 
+                          + HalfBath + BedroomAbvGr + OpenPorchSF + MSZoning + LotShape 
+                          + LotConfig + HouseStyle + RoofStyle + MasVnrType + ExterQual 
+                          + BsmtExposure + HeatingQC + BsmtFullBath + KitchenQual + GarageType 
+                          + GarageCars + HouseStyle:LotShape + HouseStyle:LotConfig + HouseStyle:BedroomAbvGr
+                          + HouseStyle:TotRmsAbvGrd + HouseStyle:GrLivArea + HouseStyle:GarageCars
+                          + HouseStyle:MSZoning + HouseStyle:X1stFlrSF + HouseStyle:X2ndFlrSF + HouseStyle:YearRemodAdd
+                          + LotShape:LotConfig + LotShape:BedroomAbvGr + LotShape:TotRmsAbvGrd + LotShape:GrLivArea
+                          + LotShape:GarageCars + LotShape:MSZoning + LotShape:X1stFlrSF + LotShape:X2ndFlrSF + LotShape:YearBuilt
+                          + LotShape:YearRemodAdd + LotConfig:BedroomAbvGr + LotConfig:TotRmsAbvGrd + LotConfig:GrLivArea
+                          + LotConfig:GarageCars + LotConfig:MSZoning + LotConfig:X1stFlrSF + LotConfig:X2ndFlrSF
+                          + LotConfig:YearBuilt + LotConfig:YearRemodAdd + BedroomAbvGr:TotRmsAbvGrd + BedroomAbvGr:GrLivArea 
+                          + BedroomAbvGr:GarageCars + BedroomAbvGr:MSZoning + BedroomAbvGr:X1stFlrSF + BedroomAbvGr:X2ndFlrSF
+                          + BedroomAbvGr:YearBuilt + BedroomAbvGr:YearRemodAdd + TotRmsAbvGrd:GrLivArea + TotRmsAbvGrd:GarageCars
+                          + TotRmsAbvGrd:MSZoning + TotRmsAbvGrd:X1stFlrSF + TotRmsAbvGrd:X2ndFlrSF + TotRmsAbvGrd:YearBuilt 
+                          + TotRmsAbvGrd:YearRemodAdd + GrLivArea:GarageCars + GrLivArea:MSZoning + GrLivArea:X1stFlrSF 
+                          + GrLivArea:X2ndFlrSF + GrLivArea:YearBuilt + GrLivArea:YearRemodAdd + GarageCars:MSZoning
+                          + GarageCars:X1stFlrSF + GarageCars:X2ndFlrSF + GarageCars:YearBuilt + GarageCars:YearRemodAdd
+                          + MSZoning:X1stFlrSF + MSZoning:X2ndFlrSF + MSZoning:YearBuilt + MSZoning:YearRemodAdd 
+                          + X1stFlrSF:X2ndFlrSF + X1stFlrSF:YearBuilt + X1stFlrSF:YearRemodAdd + X2ndFlrSF:YearBuilt
+                          + X2ndFlrSF:YearRemodAdd + YearBuilt:YearRemodAdd, 
+                          data = training_data)
+lm_housing_interac_select = step(lm_housing_2_interac, direction = "backward", trace = 0)
+
+summary(lm_housing_interac_select)
+```
+
 
 ## References
