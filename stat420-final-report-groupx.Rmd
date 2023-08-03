@@ -305,7 +305,7 @@ As there are many numeric and categorical variables we can are going to use corr
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=6, fig.width=7, fig.cap="Numeric data correlation with SalePrice"}
 
 # Find Correlation between numeric variables
-plot_correlation(training_data, type = "continuous", ggtheme = gtheme)
+plot_correlation(housing_data, type = "continuous", ggtheme = gtheme)
 ```
 
 Looking at the correlation plot above we can see that there are a number of numeric variables that are highly correlated to the the response `SalePrice`. The variables also so a great correlation between themselves and we can eliminate variables which are highly correlated before building the model.
@@ -313,7 +313,7 @@ Looking at the correlation plot above we can see that there are a number of nume
 ```{r, message = FALSE, warning = FALSE}
 library(dplyr)
 # Select numerical columns
-numerical_cols = subset(training_data, select = -c(SalePrice)) %>% select_if(is.numeric)
+numerical_cols = subset(housing_data, select = -c(SalePrice)) %>% select_if(is.numeric)
 
 cor_matrix = cor(numerical_cols)
 # Find the pairs of variables with high correlation
@@ -334,9 +334,10 @@ for (i in 1:nrow(high_cor_pairs)) {
   selected_variables = c(selected_variables, var1)
 }
 ```
-Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_variables)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatterplot.
+Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_variables)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatter plot.
+
 ```{r}
-plot_data = training_data[, c("SalePrice", unique(selected_variables))]
+plot_data = housing_data[, c("SalePrice", unique(selected_variables))]
 plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme)
 ```
 
@@ -345,10 +346,10 @@ plot_scatterplot(plot_data, by = "SalePrice", ggtheme = gtheme)
 For the categorical variables we will check and analyze how many of the variables have better coverage of the data for different levels. Looking at the bar plot for categorical variables in housing data above (section) we can see that a lot of categorical variables have issue as wither most ofthe data are in the same category or there a very small sample of the data for a given category.
 
 ```{r}
-categorical_cols = training_data %>% select_if(is.factor)
-all_categories = training_data[, names(categorical_cols)]
+categorical_cols = housing_data %>% select_if(is.factor)
+all_categories = housing_data[, names(categorical_cols)]
 
-prop.table(table(all_categories$RoofMatl))
+prop.table(table(all_categories))
 
 ```
 We should be able to remove the categories that have a very small footprint in the data without any issue as we will get a biased result if we use the value in model building.
