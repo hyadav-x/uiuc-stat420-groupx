@@ -278,20 +278,10 @@ grid.arrange(plot1, plot2, plot3, ncol=3)
 ```
 Out of the 3, log, square root and cube root transformations, we can see that log transforming the response variable gives us the best result of **normal distribution** of the response variable `SalePrice`. We can now confirm that `SalePrice` should be log transformed in the model so that we can normalize the distribution.
 
-### Training and Test Data
-```{r}
-set.seed(234)
-
+### Factor variables
+```{r, message=FALSE, warning=FALSE}
 # Coerce string variables as factor
 housing_data[sapply(housing_data, is.character)] = lapply(housing_data[sapply(housing_data, is.character)], as.factor)
-
-# Split data into training and test datasets
-training_data = housing_data %>% dplyr::sample_frac(0.80)
-test_data = dplyr::anti_join(housing_data, training_data, by = 'Id')
-
-# Drop Id Column from training and test data
-training_data = subset(training_data, select = -c(Id))
-test_data = subset(test_data, select = -c(Id))
 ```
 
 
@@ -389,17 +379,32 @@ selected_categories = selected_categories[!(remove_categories %in% selected_cate
 
 The selected categorical features for the model are: **`r selected_categories`**
 
+### Feature List
 
-## Statement of Research and Interest
+Based on our feature selection we will use below features for the initial model.
 
-We as a team want to implement the techniques of statistical analysis we learned in this course and implement them in the housing data. With current house prices being all-time high it would be nice if we can build something that helps analyze the current market trend and help predict the value of houses that are in the market.
+**`r ordered(c(unique(selected_numeric), selected_categories))`**
 
-The project will also help us explore some coding techniques and packages that are available for processes like data exploration, profiling, and manipulation in `R`. We would like to understand the different tools and techniques we can use in `R` for model building.
+### Split Training and Test Data
+```{r}
+set.seed(873465)
+# Split data into training and test datasets
+selected_data = subset(housing_data, select = c("Id", "SalePrice", unique(selected_numeric), selected_categories))
+training_data = selected_data %>% dplyr::sample_frac(0.80)
+test_data = dplyr::anti_join(selected_data, training_data, by = 'Id')
 
-The project holds significant business and research interest as it aims to provide valuable assistance to real estate agencies, homeowners, and property investors in making well-informed decisions. By accurately predicting property prices, stakeholders can set competitive listing prices, understand market value, and identify profitable investment opportunities. Additionally, exploring the relationships between sale prices and property features can offer valuable insights into market trends, guiding strategic planning and risk management.
+# Drop Id Column from training and test data
+training_data = subset(training_data, select = -c(Id))
+test_data = subset(test_data, select = -c(Id))
+```
 
-From a scientific perspective, analyzing the dataset will reveal patterns and correlations that contribute to property price fluctuations over time. This exploration will lead to a better understanding of the factors driving property prices, providing insights into property valuation and market dynamics.
+### Additive Model
+We will start with 
+```{r}
+lm_housing_add = lm(log(SalePrice) ~ ., data = training_data)
+lm_housing_add_select = step(lm_housing_add, direction = "backward", trace = 0)
 
-Overall, the project's goal is to leverage statistical techniques to build a robust predictive model, gain deep insights into the housing market, and deliver essential information to various stakeholders within the real estate industry.
+summary(lm_housing_add_select)
+```
 
 ## References
