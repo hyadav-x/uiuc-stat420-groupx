@@ -539,7 +539,7 @@ cleaned_interactive_mod = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt 
     X1stFlrSF:GarageCars + X2ndFlrSF:GarageCars + YearBuilt:GarageCars + 
     X1stFlrSF:MSZoning + X2ndFlrSF:MSZoning + YearBuilt:MSZoning + 
     YearRemodAdd:MSZoning + X1stFlrSF:YearBuilt + X2ndFlrSF:YearBuilt + 
-    YearBuilt:YearRemodAdd, data = training_data, subset = mod_cd > (4 / nrow(training_data)))
+    YearBuilt:YearRemodAdd, data = training_data, subset = mod_cd < (4 / nrow(training_data)))
 
 par(mfrow=c(2,1))
 
@@ -644,12 +644,12 @@ The reduced two-way interaction model exhibited the largest adjusted $R^2$ value
 
 Despite the normality violation, our best model demonstrated close predictions of house prices. The selected model although the best could perform better if we include more variables and do multiple iteration of validations on the data. Considering the timeline and size of the dataset it seems to be out of scope for the project.
 
-In conclusion, our final model predicts house prices by incorporating important variables and can acheive satisfactory performance if we include more parameters into the model and explore more models.
+In conclusion, our final model predicts house prices by incorporating important variables and can achieve satisfactory performance if we include more parameters into the model and explore more models.
 
 ## Appendix
 Below are some of the code and proecsses that we did not use in the final report.
 
-1. Check distribution of variables in the dataset. We sould benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
+1. Check distribution of variables in the dataset. We should benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
 
 ```{r, message = FALSE, warning=FALSE}
 plot_histogram(housing_data, scale_x = "log10", ggtheme = gtheme)
