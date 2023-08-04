@@ -549,6 +549,23 @@ plot_qq(lm_housing_quad)
 
 We can see with the cooks distance calculation that there are 176 influential points. To test we can remove the influential points and try fitting the same model that was selected from the larger interaction model. We can see that the issue persists. This leads us to establish the fact that we can still find a better model and do iteration of variable selection and transformations to build a better model.
 
+We can see in the below table that removing the outliers does not really help the model/selected model as the adjusted $R^2$ drops.
+```{r, message = FALSE, warning = FALSE}
+model_p_val = data.frame(
+  "Interaction Model with Outliers" = c("P-Value" = shapiro.test(resid(lm_housing_interac_select))$p.value
+                                        , "Adjusted R^2" = summary(lm_housing_interac_select)$adj),
+  "Interaction Model with no Outliers" = c("P-Value" = shapiro.test(resid(cleaned_interactive_mod))$p.value
+                                          ,"Adjusted R^2" = summary(cleaned_interactive_mod)$adj)
+)
+
+knitr::kable(t(model_p_val), digits = 32) %>%
+  kable_styling(latex_options = c("HOLD_position", "repeat_header")
+                , position = "center"
+                , bootstrap_options = c("striped", "hover", "condensed")
+                , fixed_thead = T
+                , full_width = F)
+```
+
 ### Model Performance
 To check the model performance lets do RMSE, a lower RMSE indicates better model performance because it means the model's predictions are closer to the actual values. 
 
@@ -623,17 +640,30 @@ For variable selection, we set a correlation threshold of 0.6 for numeric variab
 
 Subsequently, we explored various model types, including additive, two-way interaction, and polynomial models, using AIC for variable reduction. After considering adjusted R^2, we identified the two-way interaction model with the selected variables as the best-performing model.
 
-The reduced two-way interaction model exhibited the lowest adjusted $R^2$ value, indicating that it provides the closest predictions to the actual values. The predicted versus actual graph further confirmed the model's reliability. However, we noticed that this model violated the normality assumption based on the QQ plot. This observation was confirmed by the Shapiro-Wilk test, which rejected the null hypothesis of normality
+The reduced two-way interaction model exhibited the largest adjusted $R^2$ value, indicating that it provides the closest predictions to the actual values. The predicted versus actual graph further confirmed the model's reliability. However, we noticed that this model violated the normality assumption based on the QQ plot. This observation was confirmed by the Shapiro-Wilk test, which rejected the null hypothesis of normality.
 
 Despite the normality violation, our best model demonstrated close predictions of house prices. The selected model although the best could perform better if we include more variables and do multiple iteration of validations on the data. Considering the timeline and size of the dataset it seems to be out of scope for the project.
 
 In conclusion, our final model predicts house prices by incorporating important variables and can acheive satisfactory performance if we include more parameters into the model and explore more models.
 
 ## Appendix
-Check distribution of variables in the dataset. We sould benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
+Below are some of the code and proecsses that we did not use in the final report.
+
+1. Check distribution of variables in the dataset. We sould benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
 
 ```{r, message = FALSE, warning=FALSE}
 plot_histogram(housing_data, scale_x = "log10", ggtheme = gtheme)
+```
+
+2. We also attempted a forward AIC test to check if we can reach variables that gives best result. Given the variability in the predictors and a large number of predictors we would need a lot of compute and longer model searching to arive at a model that is best for the data analysis. Even though additive model generated with this code is better it is only slightly better than the interaction model in the report.
+```{r, message = FALSE, warning=FALSE}
+data = subset(housing_data, select = -c(Id))
+lm_test = lm(log(SalePrice) ~ 1, data = data)
+lm_full = lm(log(SalePrice) ~ . - SalePrice, data = data)
+
+lm_select_fwd_aic = MASS::stepAIC(lm_test, direction = "forward"
+                                  , scope = list(lower = lm_test, upper = lm_full)
+                                  , trace = 0)
 ```
 
 ## References
