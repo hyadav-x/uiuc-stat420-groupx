@@ -284,7 +284,7 @@ housing_data[sapply(housing_data, is.character)] = lapply(housing_data[sapply(ho
 ```
 
 ### Model Building
-Before we can build or model we need to be sure on what features we are going to use. There are 80 variables with mix of continuous and categorical types. Not all variables will be usefull and we can use a process like correlation analysis for numeric variables to drop some of the variables that are highly correlated. We will also look at the categorical variables and drop some variables which do not add value to the model building.
+Before we can build or model we need to be sure on what features we are going to use. There are 80 variables with mix of continuous and categorical types. Not all variables will be useful and we can use a process like correlation analysis for numeric variables to drop some of the variables that are highly correlated. We will also look at the categorical variables and drop some variables which do not add value to the model building.
 
 #### Feature Selection
 
@@ -321,6 +321,7 @@ for (i in 1:nrow(high_cor_pairs)) {
   selected_numeric = c(selected_numeric, var1)
 }
 ```
+
 Taking a threshold of `0.6` for the highly correlated variables of numeric type we can see that the columns we can select are: **`r unique(selected_numeric)`**. We can validate that the variables have a good linear relationship with `SalePrice` by plotting as scatter plot.
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Numeric variables vs. SalePrice"}
@@ -336,7 +337,7 @@ plot_scatterplot(plot_data
 ##### Categorical Variables
 For the categorical variables we will check and analyze how many of the variables have better coverage of the data for different levels. Looking at the bar plot for categorical variables in housing data above (section Missing Values) we can see that a lot of categorical variables have issue. That is either most of the data are in the same category or we have a very small sample of the data for a given category.
 
-We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and select those which have a significant impact on the response `SaleProce` at a significance level of `0.05`.
+We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and select those which have a significant impact on the response `SalePrice` at a significance level of `0.05`.
 
 ```{r, message = FALSE, warning = FALSE}
 categorical_cols = housing_data %>% select_if(is.factor)
@@ -547,9 +548,9 @@ plot_fitted_resid(lm_housing_quad)
 plot_qq(lm_housing_quad)
 ```
 
-We can see with the cooks distance calculation that there are 176 influential points. To test we can remove the influential points and try fitting the same model that was selected from the larger interaction model. We can see that the issue persists. This leads us to establish the fact that we can still find a better model and do iteration of variable selection and transformations to build a better model.
+We can see with the cooks distance calculation that there are 176 influential points. To test we can remove the influential points and try fitting the same model that was selected from the larger interaction model. We can see that the issue persists that is we still have normality issue in the data.
 
-We can see in the below table that removing the outliers does not really help the model/selected model as the adjusted $R^2$ drops.
+We can see in the below table that removing the outliers does not really help the model/selected model as the adjusted $R^2$ remains fairly same with p-value increasing. However, removing the data means we could end up in a situation where we inadvertently remove a class of data that is not in training but is preset in test. At this moment we can still say that our interaction model is the best model fitted.
 ```{r, message = FALSE, warning = FALSE}
 model_p_val = data.frame(
   "Interaction Model with Outliers" = c("P-Value" = shapiro.test(resid(lm_housing_interac_select))$p.value
@@ -608,7 +609,7 @@ ggplot(comparison_data, aes(x = Actual, y = Predicted)) +
 
 ```
 
-In this scatter plot, the points closely follow the diagonal dashed line, it indicates that the predicted values closely match the actual response values.
+In this scatter plot, the points closely follow the regression line, it indicates that the predicted values closely match the actual response values.
 
 ```{r, message = FALSE, warning=FALSE, fig.align='center', fig.height=3.5, fig.width=7, fig.cap="Test Data - Residual Plot"}
 residuals = test_data$log_SalePrice - predicted_values
@@ -627,27 +628,27 @@ ggplot(data.frame(Residuals = residuals), aes(x = seq_along(Residuals), y = Resi
         text = element_text(size=8))
 ```
 
-In the residual plot, there is any pattern or trend in the residuals around the horizontal dashed line, this indicates that the model has systematic errors.
+In the residual plot, there is any pattern or trend in the residuals around the horizontal line, this indicates that the model has systematic errors.
 
 ## Discussion
 The housing market is influenced by multiple factors such as location, house size, amenities, school district, and economic conditions. In this project, our aim was to predict house prices based on some of these factors using R techniques and create a reliable predictive model.
 
-During the data exploration phase, we addressed missing values by creating bar graphs and making necessary adjustments. Once the dataset was cleaned, we conducted response analysis to assess the normal distribution of the target variable, SalePrice. We observed that log-transforming the SalePrice variable resulted in the best approximation to a normal distribution. Therefore, we confirmed the necessity of log-transforming SalePrice to achieve better model performance.
+During the data exploration phase, we addressed missing values by creating bar graphs and making necessary adjustments. Once the dataset was cleaned, we conducted response analysis to assess the normal distribution of the target variable, `SalePrice.` We observed that log-transforming the `SalePrice` variable resulted in the best approximation to a normal distribution. Therefore, we confirmed the necessity of log-transforming `SalePrice` to achieve better model performance.
 
-Furthermore, a correlation plot revealed several numeric variables that showed a strong correlation with SalePrice. Additionally, some variables displayed high correlation among themselves. To improve the model's efficiency and avoid multicollinearity, we eliminated highly correlated variables before constructing the final model.
+Furthermore, a correlation plot revealed several numeric variables that showed a strong correlation with `SalePrice.` Additionally, some variables displayed high correlation among themselves. To improve the model's efficiency and avoid multicollinearity, we eliminated highly correlated variables before constructing the final model.
 
-For variable selection, we set a correlation threshold of 0.6 for numeric variables and performed significance tests for each categorical variable. We selected variables with a significant impact on the response variable, SalePrice, at a significance level of 0.05.
+For variable selection, we set a correlation threshold of 0.6 for numeric variables and performed significance tests for each categorical variable. We selected variables with a significant impact on the response variable, `SalePrice`, at a significance level of 0.05.
 
 Subsequently, we explored various model types, including additive, two-way interaction, and polynomial models, using AIC for variable reduction. After considering adjusted R^2, we identified the two-way interaction model with the selected variables as the best-performing model.
 
 The reduced two-way interaction model exhibited the largest adjusted $R^2$ value, indicating that it provides the closest predictions to the actual values. The predicted versus actual graph further confirmed the model's reliability. However, we noticed that this model violated the normality assumption based on the QQ plot. This observation was confirmed by the Shapiro-Wilk test, which rejected the null hypothesis of normality.
 
-Despite the normality violation, our best model demonstrated close predictions of house prices. The selected model although the best could perform better if we include more variables and do multiple iteration of validations on the data. Considering the timeline and size of the dataset it seems to be out of scope for the project.
+Despite the normality violation, our best model demonstrated close predictions of house prices. The selected model although the best could perform better if we include more variables and do multiple iteration of validations on the data.
 
-In conclusion, our final model predicts house prices by incorporating important variables and can achieve satisfactory performance if we include more parameters into the model and explore more models.
+In conclusion, our final model predicts house prices by incorporating important variables and can achieve satisfactory performance.
 
 ## Appendix
-Below are some of the code and proecsses that we did not use in the final report.
+Below are some of the code and processes that we did not use in the final report.
 
 1. Check distribution of variables in the dataset. We should benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
 
@@ -655,7 +656,7 @@ Below are some of the code and proecsses that we did not use in the final report
 plot_histogram(housing_data, scale_x = "log10", ggtheme = gtheme)
 ```
 
-2. We also attempted a forward AIC test to check if we can reach variables that gives best result. Given the variability in the predictors and a large number of predictors we would need a lot of compute and longer model searching to arive at a model that is best for the data analysis. Even though additive model generated with this code is better it is only slightly better than the interaction model in the report.
+2. We also attempted a forward AIC test to check if we can reach variables that gives best result. Given the variability in the predictors and a large number of predictors we would need a lot of compute and longer model searching to arrive at a model that is best for the data analysis. Even though additive model generated with this code is better it is only slightly better than the interaction model in the report.
 ```{r, message = FALSE, warning=FALSE}
 data = subset(housing_data, select = -c(Id))
 lm_test = lm(log(SalePrice) ~ 1, data = data)

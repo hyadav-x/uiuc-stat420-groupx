@@ -4539,7 +4539,7 @@ categorical data.</p>
 <h3>Model Building</h3>
 <p>Before we can build or model we need to be sure on what features we
 are going to use. There are 80 variables with mix of continuous and
-categorical types. Not all variables will be usefull and we can use a
+categorical types. Not all variables will be useful and we can use a
 process like correlation analysis for numeric variables to drop some of
 the variables that are highly correlated. We will also look at the
 categorical variables and drop some variables which do not add value to
@@ -4619,7 +4619,7 @@ we have a very small sample of the data for a given category.</p>
 As there is no generalized level for the categorical variables we can
 start with any level and then experiment. We can then perform the
 significance test for each of the individual variables and select those
-which have a significant impact on the response <code>SaleProce</code>
+which have a significant impact on the response <code>SalePrice</code>
 at a significance level of <code>0.05</code>.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>categorical_cols <span class="ot">=</span> housing_data <span class="sc">%&gt;%</span> <span class="fu">select_if</span>(is.factor)</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>categorical_cols_names <span class="ot">=</span> <span class="fu">names</span>(categorical_cols)</span>
@@ -4920,11 +4920,14 @@ Model Diagnostics.
 <p>We can see with the cooks distance calculation that there are 176
 influential points. To test we can remove the influential points and try
 fitting the same model that was selected from the larger interaction
-model. We can see that the issue persists. This leads us to establish
-the fact that we can still find a better model and do iteration of
-variable selection and transformations to build a better model.</p>
+model. We can see that the issue persists that is we still have
+normality issue in the data.</p>
 <p>We can see in the below table that removing the outliers does not
-really help the model/selected model as the adjusted <span class="math inline">\(R^2\)</span> drops.</p>
+really help the model/selected model as the adjusted <span class="math inline">\(R^2\)</span> remains fairly same with p-value
+increasing. However, removing the data means we could end up in a
+situation where we inadvertently remove a class of data that is not in
+training but is preset in test. At this moment we can still say that our
+interaction model is the best model fitted.</p>
 <div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>model_p_val <span class="ot">=</span> <span class="fu">data.frame</span>(</span>
 <span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>  <span class="st">&quot;Interaction Model with Outliers&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;P-Value&quot;</span> <span class="ot">=</span> <span class="fu">shapiro.test</span>(<span class="fu">resid</span>(lm_housing_interac_select))<span class="sc">$</span>p.value</span>
 <span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>                                        , <span class="st">&quot;Adjusted R^2&quot;</span> <span class="ot">=</span> <span class="fu">summary</span>(lm_housing_interac_select)<span class="sc">$</span>adj),</span>
@@ -5041,9 +5044,9 @@ actual values using a scatter plot.</p>
 Test Data - Predicted vs. Actuals.
 </p>
 </div>
-<p>In this scatter plot, the points closely follow the diagonal dashed
-line, it indicates that the predicted values closely match the actual
-response values.</p>
+<p>In this scatter plot, the points closely follow the regression line,
+it indicates that the predicted values closely match the actual response
+values.</p>
 <div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>residuals <span class="ot">=</span> test_data<span class="sc">$</span>log_SalePrice <span class="sc">-</span> predicted_values</span>
 <span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a><span class="co"># Create a residual plot</span></span>
@@ -5065,8 +5068,8 @@ Test Data - Residual Plot
 </p>
 </div>
 <p>In the residual plot, there is any pattern or trend in the residuals
-around the horizontal dashed line, this indicates that the model has
-systematic errors.</p>
+around the horizontal line, this indicates that the model has systematic
+errors.</p>
 </div>
 </div>
 <div id="discussion" class="section level2">
@@ -5079,20 +5082,22 @@ predictive model.</p>
 <p>During the data exploration phase, we addressed missing values by
 creating bar graphs and making necessary adjustments. Once the dataset
 was cleaned, we conducted response analysis to assess the normal
-distribution of the target variable, SalePrice. We observed that
-log-transforming the SalePrice variable resulted in the best
-approximation to a normal distribution. Therefore, we confirmed the
-necessity of log-transforming SalePrice to achieve better model
-performance.</p>
+distribution of the target variable, <code>SalePrice.</code> We observed
+that log-transforming the <code>SalePrice</code> variable resulted in
+the best approximation to a normal distribution. Therefore, we confirmed
+the necessity of log-transforming <code>SalePrice</code> to achieve
+better model performance.</p>
 <p>Furthermore, a correlation plot revealed several numeric variables
-that showed a strong correlation with SalePrice. Additionally, some
-variables displayed high correlation among themselves. To improve the
-model’s efficiency and avoid multicollinearity, we eliminated highly
-correlated variables before constructing the final model.</p>
+that showed a strong correlation with <code>SalePrice.</code>
+Additionally, some variables displayed high correlation among
+themselves. To improve the model’s efficiency and avoid
+multicollinearity, we eliminated highly correlated variables before
+constructing the final model.</p>
 <p>For variable selection, we set a correlation threshold of 0.6 for
 numeric variables and performed significance tests for each categorical
 variable. We selected variables with a significant impact on the
-response variable, SalePrice, at a significance level of 0.05.</p>
+response variable, <code>SalePrice</code>, at a significance level of
+0.05.</p>
 <p>Subsequently, we explored various model types, including additive,
 two-way interaction, and polynomial models, using AIC for variable
 reduction. After considering adjusted R^2, we identified the two-way
@@ -5108,15 +5113,13 @@ which rejected the null hypothesis of normality.</p>
 <p>Despite the normality violation, our best model demonstrated close
 predictions of house prices. The selected model although the best could
 perform better if we include more variables and do multiple iteration of
-validations on the data. Considering the timeline and size of the
-dataset it seems to be out of scope for the project.</p>
+validations on the data.</p>
 <p>In conclusion, our final model predicts house prices by incorporating
-important variables and can achieve satisfactory performance if we
-include more parameters into the model and explore more models.</p>
+important variables and can achieve satisfactory performance.</p>
 </div>
 <div id="appendix" class="section level2">
 <h2>Appendix</h2>
-<p>Below are some of the code and proecsses that we did not use in the
+<p>Below are some of the code and processes that we did not use in the
 final report.</p>
 <ol style="list-style-type: decimal">
 <li>Check distribution of variables in the dataset. We should benefit
@@ -5130,7 +5133,7 @@ the steps to get a better Feature selection.</li>
 <li>We also attempted a forward AIC test to check if we can reach
 variables that gives best result. Given the variability in the
 predictors and a large number of predictors we would need a lot of
-compute and longer model searching to arive at a model that is best for
+compute and longer model searching to arrive at a model that is best for
 the data analysis. Even though additive model generated with this code
 is better it is only slightly better than the interaction model in the
 report.</li>
