@@ -487,7 +487,7 @@ Now that we have the model selected we can use the model to do a prediction and 
 
 For diagnostics we can use the Residuals vs. Fitted plot and QQ plot to check if the model assumptions hold.
 
-```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Model Diagnostics."}
+```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=10, fig.width=7, fig.cap="Model Diagnostics."}
 plot_fitted_resid = function(model, pointcol = "coral", linecol = "dodgerblue") {
   plot(fitted(model), resid(model), 
        col = pointcol, pch = 20, cex = 1.5,
@@ -501,13 +501,14 @@ plot_qq = function(model, pointcol = "coral", linecol = "dodgerblue") {
   qqline(resid(model), col = linecol, lwd = 2)
 }
 
-par(mfrow=c(1,2))
+par(mfrow=c(2,1))
 
 plot_fitted_resid(lm_housing_interac_select)
 plot_qq(lm_housing_interac_select)
 ```
 
-As we can see from the plot that the variance assumption as well as normality assumptions are not a suspect for the select interactive model. To further validate the results for Normality assumption we can do a Shapiro-Wilk test.
+As we can see from the plot that the variance assumption as well as normality assumptions are a suspect for the select interactive model. We can see that the residuals are not distributed evenly and the QQ plot seem to have fat tails. To further validate the results for Normality assumption we can do a Shapiro-Wilk test and find that the normality is indeed a suspect here. 
+
 ```{r, message = FALSE, warning=FALSE}
 get_sw_decision = function(model, alpha) {
   decide = unname(shapiro.test(resid(model))$p.value < alpha)
@@ -517,7 +518,36 @@ get_sw_decision = function(model, alpha) {
 get_sw_decision(lm_housing_interac_select, alpha = 0.05)
 ```
 
-As we can see that the **`r shapiro.test(resid(lm_housing_interac_select))$p.value`** is less than **$\alpha = 0.05$** hence we Reject the null hypothesis and say that Normality is not a suspect.
+As we can see that the **`r shapiro.test(resid(lm_housing_interac_select))$p.value`** is less than **$\alpha = 0.05$** hence we Reject the null hypothesis and conclude that there is evidence that the data is not normally distributed and say that Normality is a suspect. This is because of large standardized residual.
+
+Lets analyze these influential points by using cooks distance and remove the data points from the training dataset to plot the diagnostics.
+
+```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=10, fig.width=7, fig.cap="Model Diagnostics."}
+mod_cd = cooks.distance(lm_housing_interac_select)
+
+cleaned_interactive_mod = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + 
+    YearRemodAdd + MasVnrArea + GrLivArea + FullBath + TotRmsAbvGrd + 
+    Fireplaces + HalfBath + BedroomAbvGr + MSZoning + LotShape + 
+    LotConfig + HouseStyle + MasVnrType + ExterQual + BsmtExposure + 
+    HeatingQC + KitchenQual + GarageCars + MSZoning:HouseStyle + 
+    LotShape:GarageCars + YearBuilt:LotShape + TotRmsAbvGrd:LotConfig + 
+    GrLivArea:LotConfig + LotConfig:GarageCars + YearBuilt:LotConfig + 
+    YearRemodAdd:LotConfig + BedroomAbvGr:GarageCars + BedroomAbvGr:MSZoning + 
+    YearBuilt:BedroomAbvGr + TotRmsAbvGrd:GarageCars + TotRmsAbvGrd:MSZoning + 
+    GrLivArea:GarageCars + GrLivArea:MSZoning + X1stFlrSF:GrLivArea + 
+    YearBuilt:GrLivArea + YearRemodAdd:GrLivArea + MSZoning:GarageCars + 
+    X1stFlrSF:GarageCars + X2ndFlrSF:GarageCars + YearBuilt:GarageCars + 
+    X1stFlrSF:MSZoning + X2ndFlrSF:MSZoning + YearBuilt:MSZoning + 
+    YearRemodAdd:MSZoning + X1stFlrSF:YearBuilt + X2ndFlrSF:YearBuilt + 
+    YearBuilt:YearRemodAdd, data = training_data, subset = mod_cd > (4 / nrow(training_data)))
+
+par(mfrow=c(2,1))
+
+plot_fitted_resid(lm_housing_quad)
+plot_qq(lm_housing_quad)
+```
+
+We can see with the cooks distance calculation that there are 176 influential points. To test we can remove the influential points and try fitting the same model that was selected from the larger interaction model. We can see that the issue persists. This leads us to establish the fact that we can still find a better model and do iteration of variable selection and transformations to build a better model.
 
 ### Model Performance
 To check the model performance lets do RMSE, a lower RMSE indicates better model performance because it means the model's predictions are closer to the actual values. 
@@ -583,7 +613,27 @@ ggplot(data.frame(Residuals = residuals), aes(x = seq_along(Residuals), y = Resi
 In the residual plot, there is any pattern or trend in the residuals around the horizontal dashed line, this indicates that the model has systematic errors.
 
 ## Discussion
+The housing market is influenced by multiple factors such as location, house size, amenities, school district, and economic conditions. In this project, our aim was to predict house prices based on some of these factors using R techniques and create a reliable predictive model.
+
+During the data exploration phase, we addressed missing values by creating bar graphs and making necessary adjustments. Once the dataset was cleaned, we conducted response analysis to assess the normal distribution of the target variable, SalePrice. We observed that log-transforming the SalePrice variable resulted in the best approximation to a normal distribution. Therefore, we confirmed the necessity of log-transforming SalePrice to achieve better model performance.
+
+Furthermore, a correlation plot revealed several numeric variables that showed a strong correlation with SalePrice. Additionally, some variables displayed high correlation among themselves. To improve the model's efficiency and avoid multicollinearity, we eliminated highly correlated variables before constructing the final model.
+
+For variable selection, we set a correlation threshold of 0.6 for numeric variables and performed significance tests for each categorical variable. We selected variables with a significant impact on the response variable, SalePrice, at a significance level of 0.05.
+
+Subsequently, we explored various model types, including additive, two-way interaction, and polynomial models, using AIC for variable reduction. After considering adjusted R^2, we identified the two-way interaction model with the selected variables as the best-performing model.
+
+The reduced two-way interaction model exhibited the lowest adjusted $R^2$ value, indicating that it provides the closest predictions to the actual values. The predicted versus actual graph further confirmed the model's reliability. However, we noticed that this model violated the normality assumption based on the QQ plot. This observation was confirmed by the Shapiro-Wilk test, which rejected the null hypothesis of normality
+
+Despite the normality violation, our best model demonstrated close predictions of house prices. The selected model although the best could perform better if we include more variables and do multiple iteration of validations on the data. Considering the timeline and size of the dataset it seems to be out of scope for the project.
+
+In conclusion, our final model predicts house prices by incorporating important variables and can acheive satisfactory performance if we include more parameters into the model and explore more models.
 
 ## Appendix
+Check distribution of variables in the dataset. We sould benefit from checking the distribution of the different predictor variables in the data. Although we did not explore more on this we could have used the steps to get a better Feature selection.
+
+```{r, message = FALSE, warning=FALSE}
+plot_histogram(housing_data, scale_x = "log10", ggtheme = gtheme)
+```
 
 ## References
