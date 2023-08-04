@@ -1,5 +1,5 @@
 ---
-title: "Data Analysis Project - Proposal"
+title: "Understanding the Factors That Drive House Prices"
 author: 
   - Hitesh Yadav (hitesh2) 
   - Byunggeun Park (bpark14)
@@ -37,17 +37,10 @@ The housing market in today's day and age is influenced by a variety of factors 
 
 The data we are going to use is obtained from Kaggle and can be found at the link [here](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data) [@house-prices-advanced-regression-techniques]. We are not considering the economic conditions in this project as one of the factors for the price of the house and keeping it as out of scope for this analysis project.
 
-### Tentative Title
 
-As we plan to explore the data and build a predictive model for the pricing of the house we may have different predictor variables that can influence the path we take for the project. Below are some of the titles that the project can have based on our model we create:
+## Methods
 
-- **Modeling the Dynamics of House Prices**
-- **Understanding the Factors That Drive House Prices**
-- **Housing Market Analytics: Predicting Property Sale Prices**
-- **Predicting House Prices: A Regression Analysis**
-- **Predicting Real Estate Prices: A Comprehensive Regression Study**
-
-## Dataset
+### Dataset
 
 The data set we are using is sourced from a Kaggle competition in the link [here](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data) [@house-prices-advanced-regression-techniques].
 
@@ -55,7 +48,7 @@ From the competition Acknowledgements
 
 *The Ames Housing dataset was compiled by Dean De Cock for use in data science education. It's an incredible alternative for data scientists looking for a modernized and expanded version of the often cited Boston Housing dataset.*
 
-### Data files
+#### Data files
 
 The dataset is divided into 2 files that include training and test data. The dataset also includes a file that has description of the fields of the dataset.
 
@@ -79,7 +72,7 @@ housing_data = rbind(housing_train, merge(housing_test, test_price, by = "Id"))
 
 We will use the sale price values from `sample_submission.csv` to add the missing `SalePrice` variable in the test data and combine the data frames created from the train and test data. We are going to use a 80-20 split for the model building.
 
-### Variables/Data fields
+#### Variables/Data fields
 
 ```{r, echo = FALSE}
 library(knitr)
@@ -105,13 +98,13 @@ df %>%
   scroll_box(height = "400px")
 ```
 
-## Data Exploration
+### Data Exploration
 
 For any data analysis project its good to know the the underlying data and the values. Specially what are types of the data and fields we can use to do the prediction.
 
 We will use `SalePrice` as our response for the model and any or all fields in the dataset that we see fit for the model building.
 
-### Sample Data
+#### Sample Data
 Exploring the data we can look at some of the columns and values in the dataset.
 
 ```{r, message = FALSE, warning = FALSE}
@@ -131,7 +124,7 @@ dplyr::sample_n(housing_data, 10) %>%
                 , fixed_thead = T)
 ```
 
-### Missing Values
+#### Missing Values
 We will use `DataExplorer` package to look into the data and initial profiling of the data. The idea is to understand the data better and make sure that we have detailed column analysis before we start building the model.
 
 ```{r, message = FALSE, warning = FALSE, fig.align='center'}
@@ -153,7 +146,6 @@ t(introduce(housing_data)) %>%
 
 Looking at the initial table above we can see that there are substantial missing values in the observations specially there are `0` complete rows that means we cannot just remove the missing value lines, doing so will have 0 observations for training. We will circle back on fixing the missing values in some time.
 
-\newpage
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=3.5, fig.width=7}
 plot_intro(housing_data, ggtheme = gtheme)
 ```
@@ -230,7 +222,7 @@ dplyr::sample_n(housing_data, 10) %>%
 ```
 With the initial data cleaning done we can see from above plot that the data seems to be clean and usable now as we have removed all the `NA` and all rows are complete with values that we can use in `R` for modeling.
 
-### Response for the Model
+### Response Analysis
 
 We are going to use `SalePrice` as response for the model. As this is a continuous variable we would want to investigate the distribution of the price so that we we can use a linear modeling technique to predict the price. A good initial tool is to check the distribution for a continuous variable is to plot a histogram.
 
@@ -285,18 +277,18 @@ grid.arrange(plot1, plot2, plot3, ncol=3)
 Out of the 3, log, square root and cube root transformations, we can see that log transforming the response variable gives us the best result of **normal distribution** of the response variable `SalePrice`. We can now confirm that `SalePrice` should be log transformed in the model so that we can normalize the distribution.
 
 ### Factor variables
+A lot of the variables in the dataset are read as character. We will coerce them to factor so that its easier for model building with categorical data.
 ```{r, message=FALSE, warning=FALSE}
 # Coerce string variables as factor
 housing_data[sapply(housing_data, is.character)] = lapply(housing_data[sapply(housing_data, is.character)], as.factor)
 ```
 
-
-## Model Building
+### Model Building
 Before we can build or model we need to be sure on what features we are going to use. There are 80 variables with mix of continuous and categorical types. Not all variables will be usefull and we can use a process like correlation analysis for numeric variables to drop some of the variables that are highly correlated. We will also look at the categorical variables and drop some variables which do not add value to the model building.
 
-### Feature Selection
+#### Feature Selection
 
-#### Numeric variables
+##### Numeric variables
 As there are many numeric and categorical variables we can are going to use correlation analysis to select features which are highly correlated to sale price and then compare then to other features which can be dropped.
 ```{r, message = FALSE, warning = FALSE, fig.align='center', fig.height=6, fig.width=7, fig.cap="Numeric data correlation with SalePrice"}
 
@@ -341,7 +333,7 @@ plot_scatterplot(plot_data
                  , ncol = 4L)
 ```
 
-#### Categorical Variables
+##### Categorical Variables
 For the categorical variables we will check and analyze how many of the variables have better coverage of the data for different levels. Looking at the bar plot for categorical variables in housing data above (section Missing Values) we can see that a lot of categorical variables have issue. That is either most of the data are in the same category or we have a very small sample of the data for a given category.
 
 We will keep the threshold of the categorical variables as 80 and 20. As there is no generalized level for the categorical variables we can start with any level and then experiment. We can then perform the significance test for each of the individual variables and select those which have a significant impact on the response `SaleProce` at a significance level of `0.05`.
@@ -390,13 +382,17 @@ selected_categories = selected_categories[!(remove_categories %in% selected_cate
 
 The selected categorical features for the model are: **`r selected_categories`**
 
-### Feature List
+#### Feature List
 
 Based on our feature selection we will use below features for the initial model.
 
 **`r ordered(c(unique(selected_numeric), selected_categories))`**
 
-### Split Training and Test Data
+
+#### Split Training and Test Data
+
+Now that data is clean and prepped we will split the data into 80-20 split. `80%` of the data will be used as training data and `20%` of the data will be used for testing.
+
 ```{r, message = FALSE, warning = FALSE}
 set.seed(873465)
 # Split data into training and test datasets
@@ -409,14 +405,15 @@ training_data = subset(training_data, select = -c(Id))
 test_data = subset(test_data, select = -c(Id))
 ```
 
-### Additive model
+#### Additive model
 We will start with a simple additive model with selected variables and perform a backward AIC to reduce the model and select which of the variables perform well.
 
 ```{r, message = FALSE, warning = FALSE}
 lm_housing_add = lm(log(SalePrice) ~ ., data = training_data)
 lm_housing_add_select = step(lm_housing_add, direction = "backward", trace = 0)
 ```
-### Two-way interaction model
+
+#### Two-way interaction model
 
 Looking at the data and selected variables based on our analysis we think that there should be some good interactions between variables like `HouseStyle`, `LotShape`, `LotConfig`, `BedroomAbvGr`, `TotRmsAbvGrd`, `GrLivArea`, `GarageCars`, `MSZoning`, `X1stFlrSF`, `X2ndFlrSF`, `YearBuilt` and `YearRemodAdd` with certain variables. We will explore these interactions to build the initial interaction model and then reduce the model using backward AIC.
 
@@ -447,7 +444,7 @@ lm_housing_2_interac = lm(log(SalePrice) ~ X2ndFlrSF + X1stFlrSF + YearBuilt + Y
 lm_housing_interac_select = step(lm_housing_2_interac, direction = "backward", trace = 0)
 ```
 
-### Polynomial model
+#### Polynomial model
 
 We can also build a polynomial model and look into how the variables perform. As there are many numeric variables that were selected during variable selection we should be able to try out the polynomial transformation for the variables and see if the model benefits from the transformation. We will only do a quadratic polinomial for the sake of simplicity of the project.
 ```{r, message = FALSE, warning = FALSE}
@@ -460,7 +457,7 @@ lm_housing_quad = lm(log(SalePrice) ~ I(X2ndFlrSF ^ 2) + I(X1stFlrSF ^ 2) + I(Ye
 lm_housing_quad_select = step(lm_housing_quad, direction = "backward", trace = 0)
 ```
 
-## Model Selection
+### Model Selection
 We will use adjusted $R^2$ to select the best model out of the ones created above.
 
 ```{r, message = FALSE, warning = FALSE}
@@ -488,6 +485,8 @@ Now that we have the model selected we can use the model to do a prediction and 
 
 ### Diagnostics
 
+For diagnostics we can use the Residuals vs. Fitted plot and QQ plot to check if the model assumptions hold.
+
 ```{r, message=FALSE, warning=FALSE, fig.align='center', fig.height=5, fig.width=7, fig.cap="Model Diagnostics."}
 plot_fitted_resid = function(model, pointcol = "coral", linecol = "dodgerblue") {
   plot(fitted(model), resid(model), 
@@ -508,15 +507,25 @@ plot_fitted_resid(lm_housing_interac_select)
 plot_qq(lm_housing_interac_select)
 ```
 
+As we can see from the plot that the variance assumption as well as normality assumptions are not a suspect for the select interactive model. To further validate the results for Normality assumption we can do a Shapiro-Wilk test.
+```{r, message = FALSE, warning=FALSE}
+get_sw_decision = function(model, alpha) {
+  decide = unname(shapiro.test(resid(model))$p.value < alpha)
+  ifelse(decide, "Reject", "Fail to Reject")
+}
+
+get_sw_decision(lm_housing_interac_select, alpha = 0.05)
+```
+
+As we can see that the **`r shapiro.test(resid(lm_housing_interac_select))$p.value`** is less than **$\alpha = 0.05$** hence we Reject the null hypothesis and say that Normality is not a suspect.
+
+### Model Performance
+To check the model performance lets do RMSE, a lower RMSE indicates better model performance because it means the model's predictions are closer to the actual values. 
 
 ```{r, message = FALSE, warning=FALSE}
 # Make predictions using the fitted model and test data
 predicted_values = predict(lm_housing_interac_select, newdata = test_data)
-```
 
-To check the model performance lets do RMSE, a lower RMSE indicates better model performance because it means the model's predictions are closer to the actual values. 
-
-```{r, message = FALSE, warning=FALSE}
 test_data$log_SalePrice = log(test_data$SalePrice)
 rmse = sqrt(mean((test_data$log_SalePrice - predicted_values)^2))
 
@@ -532,5 +541,49 @@ knitr::kable(t(test_data_rmse)) %>%
                 , full_width = F)
 ```
 
+For graphical summaries of the results lets compare our predicted and actual values using a scatter plot.
+
+```{r, message = FALSE, warning=FALSE, fig.align='center', fig.height=3.5, fig.width=7, fig.cap="Test Data - Predicted vs. Actuals."}
+library(ggplot2)
+
+comparison_data = data.frame(Predicted = predicted_values, Actual = test_data$log_SalePrice)
+ggplot(comparison_data, aes(x = Actual, y = Predicted)) +
+  geom_point(color = "coral") +
+  geom_smooth(method="lm", col="dodgerblue", se=FALSE) +
+  labs(x = "Actual Response", y = "Predicted Value", title = "Predicted vs Actual") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(), 
+        text = element_text(size=8))
+
+```
+
+In this scatter plot, the points closely follow the diagonal dashed line, it indicates that the predicted values closely match the actual response values.
+
+```{r, message = FALSE, warning=FALSE, fig.align='center', fig.height=3.5, fig.width=7, fig.cap="Test Data - Residual Plot"}
+residuals = test_data$log_SalePrice - predicted_values
+
+# Create a residual plot
+ggplot(data.frame(Residuals = residuals), aes(x = seq_along(Residuals), y = Residuals)) +
+  geom_point(color = "coral") +
+  geom_hline(yintercept = 0, color = "dodgerblue") +
+  labs(x = "Observation Index", y = "Residuals", title = "Residual Plot") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(), 
+        text = element_text(size=8))
+```
+
+In the residual plot, there is any pattern or trend in the residuals around the horizontal dashed line, this indicates that the model has systematic errors.
+
+## Discussion
+
+## Appendix
 
 ## References
